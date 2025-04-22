@@ -64,17 +64,7 @@ class TemplateForecaster(ForecastBot):
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
             research = ""
-            if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
-                research = await AskNewsSearcher().get_formatted_news_async(
-                    question.question_text
-                )
-            elif os.getenv("EXA_API_KEY"):
-                research = await self._call_exa_smart_searcher(
-                    question.question_text
-                )
-            elif os.getenv("PERPLEXITY_API_KEY"):
-                research = await self._call_perplexity(question.question_text)
-            elif os.getenv("OPENROUTER_API_KEY"):
+            if os.getenv("OPENROUTER_API_KEY"):
                 research = await self._call_perplexity(
                     question.question_text, use_open_router=True
                 )
@@ -100,6 +90,7 @@ class TemplateForecaster(ForecastBot):
 
             Question:
             {question}
+            Try to find base rates/historical rates an any way that the current situation is different from history
             """
         )  # NOTE: The metac bot in Q1 put everything but the question in the system prompt.
         if use_open_router:
@@ -132,6 +123,20 @@ class TemplateForecaster(ForecastBot):
         )  # You can ask the searcher to filter by date, exclude/include a domain, and run specific searches for finding sources vs finding highlights within a source
         response = await searcher.invoke(prompt)
         return response
+    
+    def get_final_decision_llm(self) -> GeneralLlm:
+        model = None
+        if os.getenv("OPEN_API_KEY"):
+            model = GeneralLlm(model = "gpt-4o", temperature = .3)
+        elif os.getenv("ANTHROPIC_API_KEY"):
+            model = GeneralLlm(model = "claude-5-5-sonnett-20241022", temperature =.3)
+        elif os.getenv("OPENROUTER_API_KEY"):
+            model = GeneralLlm(model = "openrouter/openai/gpt-4o", temperature =.3)
+        elif os.getenv("METACULUS_TOKEN"):
+            model = GeneralLlm(model = "metaculus/gpt-4o", temperature =.3)
+        else:
+            raise ValueError("No API key for final_decision_llm found")
+        return model
 
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
@@ -163,7 +168,7 @@ class TemplateForecaster(ForecastBot):
             (b) The status quo outcome if nothing changed.
             (c) A brief description of a scenario that results in a No outcome.
             (d) A brief description of a scenario that results in a Yes outcome.
-
+            (e) Please consider the historical base rate and make a guess if you are not sure
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
@@ -205,7 +210,7 @@ class TemplateForecaster(ForecastBot):
             {research}
 
             Today is {datetime.now().strftime("%Y-%m-%d")}.
-
+            
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
