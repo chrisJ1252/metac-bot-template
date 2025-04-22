@@ -127,13 +127,13 @@ class TemplateForecaster(ForecastBot):
     def get_final_decision_llm(self) -> GeneralLlm:
         model = None
         if os.getenv("OPEN_API_KEY"):
-            model = GeneralLlm(model = "gpt-4o", temperature = .3)
+            model = GeneralLlm(model = "gpt-3.5-turbo", temperature = .3)
         elif os.getenv("ANTHROPIC_API_KEY"):
             model = GeneralLlm(model = "claude-5-5-sonnett-20241022", temperature =.3)
         elif os.getenv("OPENROUTER_API_KEY"):
-            model = GeneralLlm(model = "openrouter/openai/gpt-4o", temperature =.3)
+            model = GeneralLlm(model = "openrouter/openai/gpt-3.5-turbo", temperature =.3)
         elif os.getenv("METACULUS_TOKEN"):
-            model = GeneralLlm(model = "metaculus/gpt-4o", temperature =.3)
+            model = GeneralLlm(model = "metaculus/gpt-3.5-turbo", temperature =.3)
         else:
             raise ValueError("No API key for final_decision_llm found")
         return model
@@ -210,7 +210,7 @@ class TemplateForecaster(ForecastBot):
             {research}
 
             Today is {datetime.now().strftime("%Y-%m-%d")}.
-            
+
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
