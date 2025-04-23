@@ -62,7 +62,7 @@ class TemplateForecaster(ForecastBot):
     Additionally OpenRouter has large rate limits immediately on account creation
     """
 
-    _max_concurrent_questions = 2  # Set this to whatever works for your search-provider/ai-model rate limits
+    _max_concurrent_questions = 1 
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
@@ -130,13 +130,9 @@ class TemplateForecaster(ForecastBot):
     
     def get_final_decision_llm(self) -> GeneralLlm:
         model = None
-        if os.getenv("OPEN_API_KEY"):
-            model = GeneralLlm(model = "gpt-4o", temperature = .3)
-        elif os.getenv("ANTHROPIC_API_KEY"):
-            model = GeneralLlm(model = "claude-5-5-sonnett-20241022", temperature =.3)
-        elif os.getenv("OPENROUTER_API_KEY"):
+        if os.getenv("OPENROUTER_API_KEY"):
             model = GeneralLlm(model = "openrouter/openai/gpt-4o", temperature =.3)
-        elif os.getenv("METACULUS_TOKEN"):
+        if os.getenv("METACULUS_TOKEN"):
             model = GeneralLlm(model = "metaculus/gpt-4o", temperature =.3)
         else:
             raise ValueError("No API key for final_decision_llm found")
@@ -174,6 +170,7 @@ class TemplateForecaster(ForecastBot):
             (d) A brief description of a scenario that results in a Yes outcome.
             (e) Please consider the historical base rate and make a guess if you are not sure
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+            (f) Make sure to reason before writing your final answer
 
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
@@ -219,7 +216,7 @@ class TemplateForecaster(ForecastBot):
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
             (c) A description of an scenario that results in an unexpected outcome.
-
+            (e) Think about how certain actions taken by people in high power affect lower class citizens and how they would react before outputting your final answer
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
 
             The last thing you write is your final probabilities for the N options in this order {question.options} as:
@@ -286,6 +283,7 @@ class TemplateForecaster(ForecastBot):
             (f) A brief description of an unexpected scenario that results in a high outcome.
 
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+            
 
             The last thing you write is your final answer as:
             "
