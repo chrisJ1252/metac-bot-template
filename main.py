@@ -4,6 +4,10 @@ import logging
 import os
 from datetime import datetime
 from typing import Literal
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
+
+
 
 from forecasting_tools import (
     AskNewsSearcher,
@@ -127,13 +131,13 @@ class TemplateForecaster(ForecastBot):
     def get_final_decision_llm(self) -> GeneralLlm:
         model = None
         if os.getenv("OPEN_API_KEY"):
-            model = GeneralLlm(model = "gpt-3.5-turbo", temperature = .3)
+            model = GeneralLlm(model = "gpt-4o", temperature = .3)
         elif os.getenv("ANTHROPIC_API_KEY"):
             model = GeneralLlm(model = "claude-5-5-sonnett-20241022", temperature =.3)
         elif os.getenv("OPENROUTER_API_KEY"):
-            model = GeneralLlm(model = "openrouter/openai/gpt-3.5-turbo", temperature =.3)
+            model = GeneralLlm(model = "openrouter/openai/gpt-4o", temperature =.3)
         elif os.getenv("METACULUS_TOKEN"):
-            model = GeneralLlm(model = "metaculus/gpt-3.5-turbo", temperature =.3)
+            model = GeneralLlm(model = "metaculus/gpt-4o", temperature =.3)
         else:
             raise ValueError("No API key for final_decision_llm found")
         return model
